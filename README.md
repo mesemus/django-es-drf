@@ -1,5 +1,7 @@
 # Django ES DRF
 
+**Work in progress**
+
 A simple integration layer between Django, Elasticsearch and Django rest framework
 
 ## Model and ES Document example
