@@ -41,4 +41,4 @@ jobs:
       - name: Run Tests
         run: |
           ls -la .
-          poetry django-admin test
+          poetry run python ./manage.py test
