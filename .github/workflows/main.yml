@@ -2,7 +2,8 @@ name: CI
 on:
   - pull_request
   - push
-
+env:
+  PYTHONPATH: .
 jobs:
   ci:
     strategy:
@@ -33,6 +34,8 @@ jobs:
           pip install poetry
       - name: Install dependencies
         run: poetry install
+      - name: Build
+        run: poetry build
       - name: Run Tests
         run: |
           python manage.py test
