@@ -3,6 +3,7 @@ name = "django-es-drf"
 version = "1.0.0a1"
 description = "Simple django - elasticsearch - drf integration"
 authors = ["Mirek Simek <miroslav.simek@vscht.cz>"]
+readme="README.md"
 
 
 [tool.poetry.dependencies]
