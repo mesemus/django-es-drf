@@ -1,0 +1,42 @@
+.idea
+source_this_to_activate
+apache/media
+/emails
+
+# python cache
+__pycache__
+*pyc
+
+# node
+node_modules
+
+# log files
+*log
+
+# local files
+.envrc
+scripts/cpdf
+
+.venv
+
+*.egg-info
+
+/dist
+/.tox
+
+pip-wheel-metadata/
+
+tmp-mails/
+
+.local-config.json
+
+.local-config-test.json
+
+.cache/
+
+
+webui.old2/
+alumni-ui.old
+
+/initial_data/uchazeci-do-not-commit.csv
+/initial_data/stredni_skoly_do_not_commit.csv

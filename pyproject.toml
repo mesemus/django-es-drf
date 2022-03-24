@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "django-es-drf"
+version = "1.0.0"
+description = "Simple django - elasticsearch - drf integration"
+authors = ["Mirek Simek <miroslav.simek@vscht.cz>"]
+
+
+[tool.poetry.dependencies]
+python = "^3.9"
+elasticsearch-dsl = "^7"
+django = "^4"
+djangorestframework = "^3.13.1"
+lazy-object-proxy = "^1.7.1"
+luqum = "^0.11.0"
+
+[tool.poetry.dev-dependencies]
+ipython = "^8.1.1"
+black = "^22.1.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
