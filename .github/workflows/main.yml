@@ -38,4 +38,4 @@ jobs:
         run: poetry build
       - name: Run Tests
         run: |
-          ${pythonLocation}/bin/python manage.py test
+          poetry run manage.py test
