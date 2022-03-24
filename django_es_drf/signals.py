@@ -15,7 +15,7 @@ def data_deleted(sender, instance=None, **kwargs):
 
 @receiver(m2m_changed)
 def m2m_hook(sender, instance, action, **kwargs):
-    if not action.startswith('post_'):
+    if not action.startswith("post_"):
         return
     try:
         registry.get_registry_entry_from_django(type(instance))

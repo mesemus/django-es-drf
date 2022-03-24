@@ -10,29 +10,36 @@ from django_es_drf.document_registry import RegistrationContext
 
 
 def generate_extra_document_fields(
-        document: Type[e.Document],
-        model: Type[models.Model],
-        serializer: Type[serializers.ModelSerializer],
-        mapping: Union[
-            Dict[
-                Type[models.Field],
-                Union[Callable[[serializers.Field], RegistrationContext], Type[e.Field]],
-            ],
-            Dict[
-                str,
-                Union[Callable[[serializers.Field], RegistrationContext], Type[e.Field]],
-            ],
+    document: Type[e.Document],
+    model: Type[models.Model],
+    serializer: Type[serializers.ModelSerializer],
+    mapping: Union[
+        Dict[
+            Type[models.Field],
+            Union[Callable[[serializers.Field], RegistrationContext], Type[e.Field]],
         ],
-        included: List[str],
-        excluded: List[str],
-        prefix="",
+        Dict[
+            str,
+            Union[Callable[[serializers.Field], RegistrationContext], Type[e.Field]],
+        ],
+    ],
+    included: List[str],
+    excluded: List[str],
+    prefix="",
 ):
     existing_mapping = document._doc_type.mapping
-    ctx = RegistrationContext(model=model, serializer=serializer,
-                              mapping=mapping, prefix=prefix,
-                              included=included, excluded=excluded)
+    ctx = RegistrationContext(
+        model=model,
+        serializer=serializer,
+        mapping=mapping,
+        prefix=prefix,
+        included=included,
+        excluded=excluded,
+    )
 
-    new_mapping = generate_mapping(prefix, ctx, existing_mapping, included, excluded, serializer)
+    new_mapping = generate_mapping(
+        prefix, ctx, existing_mapping, included, excluded, serializer
+    )
 
     if not new_mapping:
         return document
@@ -60,7 +67,7 @@ def generate_mapping(prefix, ctx, existing_mapping, included, excluded, serializ
             multi = False
         es_field_callable = get_es_field_from_serializer_field(prefixed_name, fld, ctx)
         if inspect.isclass(es_field_callable) and issubclass(
-                es_field_callable, e.Field
+            es_field_callable, e.Field
         ):
             new_mapping[fld_name] = es_field_callable(multi=multi)
         elif callable(es_field_callable):

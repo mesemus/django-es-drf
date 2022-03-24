@@ -17,6 +17,6 @@ DJANGO_ES_DEFAULT_FIELD_MAPPING = get(
         fields.FloatField: lambda fld_name, fld, ctx, **kwargs: e.Float(**kwargs),
         fields.DateTimeField: lambda fld_name, fld, ctx, **kwargs: e.Date(**kwargs),
         fields.DateField: lambda fld_name, fld, ctx, **kwargs: e.Date(**kwargs),
-        serializers.Serializer: object_builder
+        serializers.Serializer: object_builder,
     },
 )

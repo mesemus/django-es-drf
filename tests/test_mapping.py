@@ -4,9 +4,7 @@ from tests.app.models import SchoolWithNameAsTextDocument
 
 
 class MapppingTestCase(TestCase):
-
     def test_model_with_text(self):
         self.assertIsInstance(
-            SchoolWithNameAsTextDocument._doc_type.mapping['name'],
-            e.Text
+            SchoolWithNameAsTextDocument._doc_type.mapping["name"], e.Text
         )

@@ -65,7 +65,7 @@ class QueryFilterBackend(BaseESFilterBackend):
         if hasattr(view, filter_view_method):
             queryset = getattr(view, filter_view_method)(queryset, q)
         else:
-            parser_id = request.GET.get("parser", 'simple')
-            parser = view.query_parsers.get(parser_id) or view.query_parsers['simple']
+            parser_id = request.GET.get("parser", "simple")
+            parser = view.query_parsers.get(parser_id) or view.query_parsers["simple"]
             queryset = parser(request, queryset, view, q)
         return queryset

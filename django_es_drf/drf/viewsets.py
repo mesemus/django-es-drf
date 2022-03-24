@@ -19,10 +19,7 @@ class ESViewSet(viewsets.ModelViewSet):
     aggs = ()
     filter_backends = [ESAggsFilterBackend, QueryFilterBackend]
     serializer_class = CopyESSerializer
-    query_parsers = {
-        'simple': simple_query_parser,
-        'luqum': luqum_query_parser
-    }
+    query_parsers = {"simple": simple_query_parser, "luqum": luqum_query_parser}
 
     @property
     def document(self):

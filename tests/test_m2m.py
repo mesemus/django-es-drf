@@ -1,8 +1,7 @@
 from django.test import TestCase
 
 from django_es_drf.indexer import bulk_es
-from tests.app.models import SchoolWithM2MDocument, Person, \
-    SchoolWithM2M
+from tests.app.models import SchoolWithM2MDocument, Person, SchoolWithM2M
 
 
 class M2MTestCase(TestCase):
@@ -21,11 +20,11 @@ class M2MTestCase(TestCase):
             s.people.add(p1, p2)
         doc = SchoolWithM2MDocument.get(id=s.id)
         print(doc.to_dict())
-        self.assertDictEqual(doc.to_dict(), {
-            'id': 1,
-            'name': 'test',
-            'people': [
-                {'id': 1, 'name': 'Kate'},
-                {'id': 2, 'name': 'Jim'}
-            ]
-        })
+        self.assertDictEqual(
+            doc.to_dict(),
+            {
+                "id": 1,
+                "name": "test",
+                "people": [{"id": 1, "name": "Kate"}, {"id": 2, "name": "Jim"}],
+            },
+        )

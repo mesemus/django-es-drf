@@ -39,8 +39,9 @@ class DjangoDocument(Document):
         return registry.load_from_django_object(cls, pk)
 
 
-RegistrationContext = namedtuple("RegistrationContext",
-                                 "model, serializer, mapping, prefix, included, excluded")
+RegistrationContext = namedtuple(
+    "RegistrationContext", "model, serializer, mapping, prefix, included, excluded"
+)
 
 
 class DocumentRegistry:
@@ -49,14 +50,14 @@ class DocumentRegistry:
         self.by_document = {}
 
     def register(
-            self,
-            model: Type[Model],
-            serializer: Type[ModelSerializer] = None,
-            serializer_meta: Dict[str, any] = None,
-            generate=True,
-            included=(),
-            excluded=(),
-            mapping=None,
+        self,
+        model: Type[Model],
+        serializer: Type[ModelSerializer] = None,
+        serializer_meta: Dict[str, any] = None,
+        generate=True,
+        included=(),
+        excluded=(),
+        mapping=None,
     ):
         """
         A decorator that registers a model with a DSL document. Usage
@@ -91,11 +92,13 @@ class DocumentRegistry:
             serializer = type(
                 f"{model.__name__}Serializer",
                 (ModelSerializer,),
-                {"Meta": type("Meta", (), {
-                    "model": model,
-                    "exclude": (),
-                    **(serializer_meta or {})
-                })},
+                {
+                    "Meta": type(
+                        "Meta",
+                        (),
+                        {"model": model, "exclude": (), **(serializer_meta or {})},
+                    )
+                },
             )
 
         def do_registration(document, model, serializer):
@@ -167,7 +170,7 @@ class DocumentRegistry:
         return doc._index._name, doc.meta.id, to_plain_json(doc)
 
     def get_registry_entry_from_document(
-            self, document: Type[Document]
+        self, document: Type[Document]
     ) -> DocumentRegistryEntry:
         for m in document.mro():
             if m in self.by_document:
@@ -177,7 +180,7 @@ class DocumentRegistry:
         )
 
     def get_registry_entry_from_django(
-            self, django: Type[Model]
+        self, django: Type[Model]
     ) -> DocumentRegistryEntry:
         for m in django.mro():
             if m in self.by_model:
