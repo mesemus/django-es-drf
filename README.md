@@ -5,18 +5,18 @@
 A simple integration layer between Django, Elasticsearch and Django rest framework
 
 - [Django ES DRF](#django-es-drf)
-    - [Model and ES Document example](#model-and-es-document-example)
-    - [DRF example](#drf-example)
-        - [Search, facets](#search-facets)
-    - [Django Document and mapping](#django-document-and-mapping)
-        - [Custom declaration for fields](#custom-declaration-for-fields)
-        - [Excluding fields](#excluding-fields)
-        - [Custom mapping between serializer fields and ES fields](#custom-mapping-between-serializer-fields-and-es-fields)
-        - [Disabling the mapping](#disabling-the-mapping)
-        - [Relations](#relations)
-    - [Serializer](#serializer)
-    - [Objects and nested](#objects-and-nested)
-    - [Viewsets](#viewsets)
+  - [Model and ES Document example](#model-and-es-document-example)
+  - [DRF example](#drf-example)
+    - [Returned fields from listing](#returned-fields-from-listing)
+    - [Search, facets](#search-facets)
+  - [Django Document and mapping](#django-document-and-mapping)
+    - [Custom declaration for fields](#custom-declaration-for-fields)
+    - [Excluding fields](#excluding-fields)
+    - [Custom mapping between serializer fields and ES fields](#custom-mapping-between-serializer-fields-and-es-fields)
+    - [Disabling the mapping](#disabling-the-mapping)
+    - [Relations](#relations)
+  - [Serializer](#serializer)
+  - [Objects and nested](#objects-and-nested)
 
 ## Model and ES Document example
 
@@ -105,7 +105,7 @@ class SchoolAPI(ESViewSet):
         return qs.filter('term', cooperating=True)
 ```
 
-#### Returned fields from listing
+### Returned fields from listing
 
 A `DynamicSourceFilter` is added automatically to filters and can be used to filter the properties returned in listings.
 
