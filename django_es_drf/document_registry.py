@@ -31,8 +31,18 @@ class DjangoDocument(Document):
             # do not save to elasticsearch inside this block as we will call super below
             obj = registry.save_to_django_object(self)
             obj.save()
-        setattr(self, self.DOCUMENT_ID_FIELD, getattr(obj, self.DJANGO_ID_FIELD))
+        _id = getattr(obj, self.DJANGO_ID_FIELD)
+        setattr(self, self.DOCUMENT_ID_FIELD, _id)
+        self.meta._id = _id
+        self.meta.id = _id
         return super().save(**kwargs)
+
+    def delete(self, using=None, index=None, **kwargs):
+        entry = registry.get_registry_entry_from_document(type(self))
+        obj = entry.model.objects.get(**{self.DJANGO_ID_FIELD: self.meta._id})
+        with disabled_es():
+            obj.delete()
+        return super().delete(using=using, index=index, **kwargs)
 
     @classmethod
     def from_django(cls, pk):
@@ -151,7 +161,7 @@ class DocumentRegistry:
         serializer = entry.serializer(data=data)
         serializer.is_valid(True)
 
-        if django_object:
+        if not django_object:
             return serializer.create(serializer.validated_data)
         else:
             return serializer.update(django_object, serializer.validated_data)
