@@ -27,7 +27,11 @@ class DynamicSourceBackend(BaseFilterBackend):
             if not isinstance(view.source, dict):
                 declared_source = {"includes": [*view.source], "excludes": []}
             else:
-                declared_source = copy.deepcopy(view.source)
+                declared_source = {
+                    "includes": [],
+                    "excludes": [],
+                    **copy.deepcopy(view.source),
+                }
         else:
             declared_source = {"includes": [], "excludes": []}
 

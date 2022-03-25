@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from tests.app.api import SchoolAPI
 from tests.app.models import School, SchoolDocument
 
 
@@ -10,6 +11,12 @@ class DRFTestCase(TestCase):
         except:
             pass
         SchoolDocument._index.create()
+
+    def tearDown(self) -> None:
+        try:
+            del SchoolAPI.source
+        except:
+            pass
 
     def test_es_listing(self):
         School.objects.create(name="test", address="blah")
@@ -33,7 +40,6 @@ class DRFTestCase(TestCase):
         School.objects.create(name="test 2", address="blah")
 
         resp = self.client.get("/schools2/").json()
-        print(resp)
         self.assertDictEqual(
             resp,
             {
@@ -68,5 +74,113 @@ class DRFTestCase(TestCase):
                         "buckets": [{"key": "blah", "doc_count": 2}],
                     },
                 ],
+            },
+        )
+
+    def test_source_filtering(self):
+        SchoolAPI.source = ["name"]
+        School.objects.create(name="test", address="blah")
+        resp = self.client.get("/schools/").json()
+        self.assertDictEqual(
+            resp,
+            {
+                "count": 1,
+                "page": 1,
+                "size": 10,
+                "pages": 1,
+                "next": None,
+                "previous": None,
+                "hits": [{"name": "test"}],
+                "aggs": {},
+            },
+        )
+
+    def test_source_filtering_exclude(self):
+        SchoolAPI.source = {"excludes": "address"}
+        School.objects.create(name="test", address="blah")
+        resp = self.client.get("/schools/").json()
+        self.assertDictEqual(
+            resp,
+            {
+                "count": 1,
+                "page": 1,
+                "size": 10,
+                "pages": 1,
+                "next": None,
+                "previous": None,
+                "hits": [{"id": 1, "name": "test"}],
+                "aggs": {},
+            },
+        )
+
+    def test_source_filtering_exclude_array(self):
+        SchoolAPI.source = {"excludes": ["address"]}
+        School.objects.create(name="test", address="blah")
+        resp = self.client.get("/schools/").json()
+        self.assertDictEqual(
+            resp,
+            {
+                "count": 1,
+                "page": 1,
+                "size": 10,
+                "pages": 1,
+                "next": None,
+                "previous": None,
+                "hits": [{"id": 1, "name": "test"}],
+                "aggs": {},
+            },
+        )
+
+    def test_source_filtering_exclude_all(self):
+        SchoolAPI.source = {"excludes": "*"}
+        School.objects.create(name="test", address="blah")
+        resp = self.client.get("/schools/").json()
+        self.assertDictEqual(
+            resp,
+            {
+                "count": 1,
+                "page": 1,
+                "size": 10,
+                "pages": 1,
+                "next": None,
+                "previous": None,
+                "hits": [{}],
+                "aggs": {},
+            },
+        )
+
+    def test_source_filtering_query(self):
+        SchoolAPI.source = ["address"]
+        School.objects.create(name="test", address="blah")
+        resp = self.client.get("/schools/?_include=name").json()
+        self.assertDictEqual(
+            resp,
+            {
+                "count": 1,
+                "page": 1,
+                "size": 10,
+                "pages": 1,
+                "next": None,
+                "previous": None,
+                "hits": [{"name": "test", "address": "blah"}],
+                "aggs": {},
+            },
+        )
+
+    def test_source_filtering_query_exclude(self):
+        SchoolAPI.source = ["name", "address"]
+        School.objects.create(name="test", address="blah")
+        resp = self.client.get("/schools/?_exclude=address").json()
+        self.assertDictEqual(
+            resp,
+            {
+                "count": 1,
+                "page": 1,
+                "size": 10,
+                "pages": 1,
+                "next": None,
+                "previous": None,
+                "hits": [{"name": "test"}],
+                "aggs": {},
             },
         )
