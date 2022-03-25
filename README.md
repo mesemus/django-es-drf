@@ -9,6 +9,10 @@ A simple integration layer between Django, Elasticsearch and Django rest framewo
   - [DRF example](#drf-example)
     - [Returned fields from listing](#returned-fields-from-listing)
     - [Search, facets](#search-facets)
+      - [Search via "q" GET parameters](#search-via-q-get-parameters)
+        - [Simple search](#simple-search)
+        - [Luqum search](#luqum-search)
+      - [Facets and faceted filtering](#facets-and-faceted-filtering)
   - [Django Document and mapping](#django-document-and-mapping)
     - [Custom declaration for fields](#custom-declaration-for-fields)
     - [Excluding fields](#excluding-fields)
@@ -17,6 +21,7 @@ A simple integration layer between Django, Elasticsearch and Django rest framewo
     - [Relations](#relations)
   - [Serializer](#serializer)
   - [Objects and nested](#objects-and-nested)
+
 
 ## Model and ES Document example
 
