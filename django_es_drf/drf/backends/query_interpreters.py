@@ -13,7 +13,7 @@ def simple_query_interpreter(request, queryset, view, q):
 
 def luqum_query_interpreter(request, queryset, view, q):
     # luqum query
-    return apply_luqum(queryset, q, view.queryset.model.DocumentMeta.document)
+    return apply_luqum(queryset, q, view.document)
 
 
 def apply_luqum(queryset, query, document):

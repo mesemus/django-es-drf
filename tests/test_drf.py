@@ -184,3 +184,88 @@ class DRFTestCase(TestCase):
                 "aggs": {},
             },
         )
+
+    def test_simple_query(self):
+        School.objects.create(name="first", address="blah")
+        School.objects.create(name="second", address="blah")
+
+        resp = self.client.get("/schools/?q=first").json()
+        print(resp)
+        self.assertDictEqual(
+            resp,
+            {
+                "count": 1,
+                "page": 1,
+                "size": 10,
+                "pages": 1,
+                "next": None,
+                "previous": None,
+                "hits": [{"address": "blah", "name": "first", "id": 1}],
+                "aggs": {},
+            },
+        )
+
+        resp = self.client.get("/schools/?q=blah").json()
+        print(resp)
+        self.assertDictEqual(
+            resp,
+            {
+                "count": 2,
+                "page": 1,
+                "size": 10,
+                "pages": 1,
+                "next": None,
+                "previous": None,
+                "hits": [
+                    {"address": "blah", "name": "first", "id": 1},
+                    {"address": "blah", "name": "second", "id": 2},
+                ],
+                "aggs": {},
+            },
+        )
+
+    def test_luqum_query(self):
+        School.objects.create(name="first", address="blah")
+        School.objects.create(name="first", address="abc")
+        School.objects.create(name="second", address="blah")
+
+        resp = self.client.get(
+            "/schools/?q=name:first AND address:blah&parser=luqum"
+        ).json()
+        print(resp)
+        self.assertDictEqual(
+            resp,
+            {
+                "count": 1,
+                "page": 1,
+                "size": 10,
+                "pages": 1,
+                "next": None,
+                "previous": None,
+                "hits": [{"address": "blah", "name": "first", "id": 1}],
+                "aggs": {},
+            },
+        )
+
+    def test_bad_query(self):
+        School.objects.create(name="first", address="blah")
+        School.objects.create(name="first", address="abc")
+        School.objects.create(name="second", address="blah")
+
+        resp = self.client.get(
+            "/schools/?q=name:first AND address:blah&parser=bad"
+        ).json()
+        print(resp)
+        self.assertDictEqual(
+            resp,
+            {
+                "count": 0,
+                "page": 1,
+                "size": 10,
+                "pages": 0,
+                "next": None,
+                "previous": None,
+                "hits": [],
+                "aggs": {},
+            },
+        )

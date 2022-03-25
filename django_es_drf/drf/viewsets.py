@@ -25,7 +25,8 @@ class ESViewSet(viewsets.ModelViewSet):
         "simple": simple_query_interpreter,
         "luqum": luqum_query_interpreter,
     }
-    default_query_interpreter = simple_query_interpreter
+    # needed so that the function is not bound (otherwise it would get 'self' as the first parameter)
+    default_query_interpreter = staticmethod(simple_query_interpreter)
 
     @property
     def document(self):

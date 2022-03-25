@@ -5,19 +5,18 @@
 A simple integration layer between Django, Elasticsearch and Django rest framework
 
 - [Django ES DRF](#django-es-drf)
-  - [Model and ES Document example](#model-and-es-document-example)
-  - [DRF example](#drf-example)
-    - [Search, facets](#search-facets)
-  - [Django Document and mapping](#django-document-and-mapping)
-    - [Custom declaration for fields](#custom-declaration-for-fields)
-    - [Excluding fields](#excluding-fields)
-    - [Custom mapping between serializer fields and ES fields](#custom-mapping-between-serializer-fields-and-es-fields)
-    - [Disabling the mapping](#disabling-the-mapping)
-    - [Relations](#relations)
-  - [Serializer](#serializer)
-  - [Objects and nested](#objects-and-nested)
-  - [Viewsets](#viewsets)
-
+    - [Model and ES Document example](#model-and-es-document-example)
+    - [DRF example](#drf-example)
+        - [Search, facets](#search-facets)
+    - [Django Document and mapping](#django-document-and-mapping)
+        - [Custom declaration for fields](#custom-declaration-for-fields)
+        - [Excluding fields](#excluding-fields)
+        - [Custom mapping between serializer fields and ES fields](#custom-mapping-between-serializer-fields-and-es-fields)
+        - [Disabling the mapping](#disabling-the-mapping)
+        - [Relations](#relations)
+    - [Serializer](#serializer)
+    - [Objects and nested](#objects-and-nested)
+    - [Viewsets](#viewsets)
 
 ## Model and ES Document example
 
@@ -123,24 +122,22 @@ or alternatively, use `_include` or `_exclude` GET params containing a list of f
 
 The filter is only used for listing and listing-like operations (that is those where object id is not present in the
 URL). If you want to restrict the filter only on some calls, add a `is_dynamic_source_filtering_enabled(self, request)`
-method on the view class.
+method on the viewset class.
 
 ### Search, facets
 
-DRF filter backends are used for both aggregations 
-and search.
+DRF filter backends are used for both aggregations and search.
 
 #### Search via "q" GET parameters
 
-Implicitly the `filter_backends` contain `QueryFilterBackend` that parses and
-interprets `q` and `parser` GET parameters:
+Implicitly the `filter_backends` contain `QueryFilterBackend` that parses and interprets `q` and `parser` GET
+parameters:
 
- * the `parser` parameter contains name of a query interpreters that will be used.
-   The interpreters are registered on 'View.query_interpreters' dictionary which defaults
-   to ``{"simple": simple_query_interpreter, "luqum": luqum_query_interpreter}``. If the
-   parameter is not passed, `simple` interpreter is used. If invalid value is passed,
-   no result is returned.
- * `q` parameter is passed to the interpreter which applies the query to a queryset
+* the `parser` parameter contains name of a query interpreter that will be used. The interpreters are registered on '
+  Viewset.query_interpreters' dictionary which defaults
+  to ``{"simple": simple_query_interpreter, "luqum": luqum_query_interpreter}``. If the parameter is not passed,
+  Viewset.default_query_interpreter interpreter is used. If invalid value is passed, no result is returned.
+* `q` parameter is passed to the interpreter which applies the query to a queryset
 
 ##### Simple search
 
@@ -148,38 +145,36 @@ The simple interpreter performs `multi_match` operation on all fields.
 
 ##### Luqum search
 
-This search interpreter takes the content of the query and interprets it as a luqum
-query string. This library enables use of `nested` mapping in query and using of
-boolean operators. See [https://luqum.readthedocs.io/en/latest/about.html](https://luqum.readthedocs.io/en/latest/about.html)
+This search interpreter takes the content of the query and interprets it as a luqum query string. This library enables
+use of `nested` mapping in query and using of boolean operators.
+See [https://luqum.readthedocs.io/en/latest/about.html](https://luqum.readthedocs.io/en/latest/about.html)
 for details on the language/capabilities.
 
 #### Facets and faceted filtering
 
-To enable aggregations and filtering by bucket values, add `aggs` to the view class.
-Example:
+To enable aggregations and filtering by bucket values, add `aggs` to the viewset class. Example:
 
 ```python
 from django_es_drf import ESViewSet, BucketAgg
 
+
 class SchoolAPI(ESViewSet):
     document = SchoolDocument
     aggs = [
-        BucketAgg("name"), 
+        BucketAgg("name"),
         BucketAgg("address")
     ]
 ```
 
 You can use the following aggregations:
 
- * `BucketAgg(name, field=None, type='terms')` - a terms bucket
-   filtering. If field is not set, it is the same as `name`. Dot notation
-   in the `field` is supported.
- * `NestedAgg(name, path, filter)` - generates a nested aggregation
- * `TranslatedBucketAgg(name, type="terms", field=None, map=None)` - 
-   translates the bucket keys through a map to get human labels
+* `BucketAgg(name, field=None, type='terms')` - a terms bucket filtering. If field is not set, it is the same as `name`.
+  Dot notation in the `field` is supported.
+* `NestedAgg(name, path, filter)` - generates a nested aggregation
+* `TranslatedBucketAgg(name, type="terms", field=None, map=None)` - translates the bucket keys through a map to get
+  human labels
 
-The aggregations are chainable. Chaining `BucketAgg` does not
-mean nesting - the aggregations are on the same level.
+The aggregations are chainable. Chaining `BucketAgg` does not mean nesting - the aggregations are on the same level.
 
 Bigger Example:
 
@@ -195,8 +190,8 @@ aggs = [
 ]
 ```
 
-Any options not interpreted by ES (in this case 'label') are copied
-into the API output (and might be used, for example, in UI renderer).
+Any options not interpreted by ES (in this case 'label') are copied into the API output (and might be used, for example,
+in UI renderer).
 
 ## Django Document and mapping
 
@@ -267,8 +262,62 @@ class SchoolDocument(DjangoDocument):
 
 ### Relations
 
-The framework does not generate code for relations - if you need this, do it in serializer and add your own mapping, or
-use a more complete library, such as django-elasticsearch-dsl-drf.
+The framework has a rudimentary support for read-only relations. If there is an M2M or ForeignKey on model and
+serializer uses target's serializer to embed the representation of the relation target, the document will contain an
+object mapping for the target's data. It can be changed to Nested via mapping parameter in Document's registration
+decorator.
+
+The framework does not provide any support for propagating changes on related models. If you need this, write your own
+change listeners or use a more complete library, such as django-elasticsearch-dsl-drf.
+
+A simple example with a foreign key:
+
+```python
+class City(models.Model):
+    name = models.CharField(max_length=100)
+
+
+class School(models.Model):
+    name = models.CharField(max_length=100)
+    city = models.ForeignKey(City, related_name="+", on_delete=models.CASCADE)
+
+
+@registry.register(School, serializer_meta={"depth": 1})
+class SchoolDocument(DjangoDocument):
+    class Index:
+        name = "schools"
+```
+
+*Note:* the `depth` in `serializer_meta` argument - it instructs the generated model serializer to create a serializer
+for city as well. This is roughly equivalent to the following code:
+
+```python
+from rest_framework import serializers
+
+
+class CitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
+        exclude = ()
+
+
+class SchoolSerializer(serializers.ModelSerializer):
+    city = CitySerializer()
+
+    class Meta:
+        model = School
+        exclude = ()
+
+
+@registry.register(School, serializer=SchoolSerializer)
+class SchoolDocument(DjangoDocument):
+    class Index:
+        name = "schools"
+```
+
+*Note:* There is no support for creating nested objects. If you need this support,
+you'll have to write your own `create`/`update` method
+on the serializer.
 
 ## Serializer
 
@@ -279,4 +328,3 @@ Note: see Relations section above if you need to serialize relations
 
 ## Objects and nested
 
-## Viewsets
