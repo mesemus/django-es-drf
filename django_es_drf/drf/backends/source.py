@@ -8,14 +8,20 @@ class DynamicSourceBackend(BaseFilterBackend):
     """Dynamic source backend."""
 
     def filter_queryset(self, request, queryset, view):
+        if not isinstance(queryset, Search):
+            return queryset
+
         if hasattr(view, "is_dynamic_source_filtering_enabled"):
             if not view.is_dynamic_source_filtering_enabled(request):
                 return queryset
 
+        # only in listing urls
+        lookup_url_kwarg = view.lookup_url_kwarg or view.lookup_field
+        if lookup_url_kwarg in view.kwargs:
+            return
+
         include = request.GET.get("_include", None)
         exclude = request.GET.get("_exclude", None)
-        if not isinstance(queryset, Search):
-            return queryset
 
         if hasattr(view, "source") and view.source:
             if not isinstance(view.source, dict):
