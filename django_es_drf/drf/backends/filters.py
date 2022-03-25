@@ -4,15 +4,6 @@ from elasticsearch_dsl import Search
 from rest_framework.filters import BaseFilterBackend
 
 
-class ESFilterBackend(BaseFilterBackend):
-    def filter_queryset(self, request, queryset, view):
-        if not isinstance(queryset, Search):
-            return queryset
-        for es_filter in view.es_filter_backends:
-            queryset = es_filter().filter_queryset(request, queryset, view)
-        return queryset
-
-
 class BaseESFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         return queryset
@@ -61,11 +52,16 @@ class QueryFilterBackend(BaseESFilterBackend):
         q = request.GET.get("q")
         if not q:
             return queryset
-        filter_view_method = f"filter_es_{view.action.lower()}"
-        if hasattr(view, filter_view_method):
-            queryset = getattr(view, filter_view_method)(queryset, q)
+        interpreter = self._get_query_interpreter(view, request)
+        if interpreter:
+            queryset = interpreter(request, queryset, view, q)
         else:
-            parser_id = request.GET.get("parser", "simple")
-            parser = view.query_parsers.get(parser_id) or view.query_parsers["simple"]
-            queryset = parser(request, queryset, view, q)
+            return queryset.filter("match_none")  # match none on invalid parser
         return queryset
+
+    @staticmethod
+    def _get_query_interpreter(view, request):
+        parser_id = request.GET.get("parser", None)
+        if not parser_id:
+            return view.default_query_interpreter
+        return view.query_interpreters.get(parser_id)

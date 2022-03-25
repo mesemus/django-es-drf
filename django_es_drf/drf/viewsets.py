@@ -1,13 +1,15 @@
-from django.http import Http404
-from elasticsearch_dsl import Q
 from rest_framework import viewsets
 from rest_framework.renderers import BrowsableAPIRenderer
 
-from .backends.filters import ESFilterBackend, ESAggsFilterBackend, QueryFilterBackend
-from .backends.parsers import simple_query_parser, luqum_query_parser
+from .backends.filters import ESAggsFilterBackend, QueryFilterBackend
+from .backends.query_interpreters import (
+    simple_query_interpreter,
+    luqum_query_interpreter,
+)
 from .pagination import ESPagination
 from .renderers import ESRenderer
 from .serializers import CopyESSerializer
+from .backends.source import DynamicSourceBackend
 
 
 class ESViewSet(viewsets.ModelViewSet):
@@ -17,9 +19,13 @@ class ESViewSet(viewsets.ModelViewSet):
         BrowsableAPIRenderer,
     ]
     aggs = ()
-    filter_backends = [ESAggsFilterBackend, QueryFilterBackend]
+    filter_backends = [DynamicSourceBackend, ESAggsFilterBackend, QueryFilterBackend]
     serializer_class = CopyESSerializer
-    query_parsers = {"simple": simple_query_parser, "luqum": luqum_query_parser}
+    query_interpreters = {
+        "simple": simple_query_interpreter,
+        "luqum": luqum_query_interpreter,
+    }
+    default_query_interpreter = simple_query_interpreter
 
     @property
     def document(self):

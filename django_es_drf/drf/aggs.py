@@ -75,19 +75,6 @@ class AggBase:
                 yield from n.filter(facets_and_values)
 
 
-class SeparatorAgg(AggBase):
-    insert_into_parent = True
-
-    def __init__(self, **kwargs):
-        super().__init__("--separator--", **kwargs)
-
-    def process_result(self, data):
-        ret = {"separator": True}
-        if self.label:
-            ret["label"] = self.label
-        return ret
-
-
 class BucketAgg(AggBase):
     insert_into_parent = True
 

@@ -17,6 +17,7 @@ luqum = "^0.11.0"
 [tool.poetry.dev-dependencies]
 ipython = "^8.1.1"
 black = "^22.1.0"
+md-toc = "^8.1.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -35,8 +35,11 @@ class DjangoDocument(Document):
         return super().save(**kwargs)
 
     @classmethod
-    def load(cls, pk):
+    def from_django(cls, pk):
         return registry.load_from_django_object(cls, pk)
+
+    def to_django(self):
+        return registry.save_to_django_object(self)
 
 
 RegistrationContext = namedtuple(
