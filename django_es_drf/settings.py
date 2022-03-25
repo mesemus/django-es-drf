@@ -3,7 +3,6 @@ from rest_framework import fields, serializers
 import elasticsearch_dsl as e
 
 from django_es_drf.nested import object_builder
-from django_es_drf.computed import serializer_method_field_builder
 
 
 def get(key, default):
@@ -19,6 +18,8 @@ DJANGO_ES_DEFAULT_FIELD_MAPPING = get(
         fields.DateTimeField: lambda fld_name, fld, ctx, **kwargs: e.Date(**kwargs),
         fields.DateField: lambda fld_name, fld, ctx, **kwargs: e.Date(**kwargs),
         serializers.Serializer: object_builder,
-        serializers.SerializerMethodField: serializer_method_field_builder,
+        serializers.SerializerMethodField: lambda fld_name, fld, ctx, **kwargs: e.Keyword(
+            **kwargs
+        ),
     },
 )

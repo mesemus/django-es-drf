@@ -245,10 +245,10 @@ Sample returned value (aggs = `aggs = [BucketAgg("name"), BucketAgg("address")]`
 
 ##### Filtering by aggregation buckets
 
-To filter by aggregation buckets, add `?f=<bucket_code>:<value>:<bucket_code>:<value>...` to the url. 
-URLEncode '%' and ':' if there is ':' in the unlikely case these chars are in the value. If you need 
-a different syntax, define a `parse_facet_query(self, request)` method on you viewset that returns 
-either None or dictionary with facet code as a key and a list of values to match as the value.
+To filter by aggregation buckets, add `?f=<bucket_code>:<value>:<bucket_code>:<value>...` to the url. URLEncode '%'
+and ':' if there is ':' in the unlikely case these chars are in the value. If you need a different syntax, define
+a `parse_facet_query(self, request)` method on you viewset that returns either None or dictionary with facet code as a
+key and a list of values to match as the value.
 
 Example:
 
@@ -415,6 +415,7 @@ If you want to change the type to nested:
 ```python
 import elasticsearch_dsl as e
 
+
 @registry.register(School, serializer_meta={"depth": 1}, mapping={
     'city': e.Nested
 })
@@ -434,21 +435,27 @@ Optionally you might want to provide your own serializer, to transform/generate 
 The serializer is just a plain DRF serializer that converts django fields to document's fields, there is nothing fancy
 about it.
 
-*Note:* If you use `SerializerMethodField`, be sure to insert a return type (as field from serializers) on the method as well. 
-If no type is used, it will be assumed to be a string:
+*Note:* If you use `SerializerMethodField`, be sure to add the correct field into the mapping:
 
 ```python
 from rest_framework import serializers
+
 
 class SchoolSerializer(serializers.ModelSerializer):
     name_with_address = serializers.SerializerMethodField()
 
     def get_name_with_address(self, instance):
         return f"{instance.name}, {instance.address}"
-    # v-- do not forget to add this
-    get_name_with_address.output_type = serializers.CharField
 
     class Meta:
         model = School
         exclude = ()
+
+
+@registry.register(School, serializer=SchoolSerializer, mapping={
+    'name_with_address': e.Text
+})
+class SchoolDocument(DjangoDocument):
+    class Index:
+        name = "schools"
 ```

@@ -64,19 +64,20 @@ class SchoolWithSerializer(models.Model):
 
 class SchoolSerializer(serializers.ModelSerializer):
     name_with_address = serializers.SerializerMethodField()
-    name_with_address.output_type = serializers.CharField()
 
     def get_name_with_address(self, instance):
         return f"{instance.name}, {instance.address}"
-
-    get_name_with_address.output_type = serializers.CharField()
 
     class Meta:
         model = SchoolWithSerializer
         exclude = ()
 
 
-@registry.register(SchoolWithSerializer, serializer=SchoolSerializer)
+@registry.register(
+    SchoolWithSerializer,
+    serializer=SchoolSerializer,
+    mapping={"name_with_address": e.Text},
+)
 class SchoolWithSerializerDocument(DjangoDocument):
     class Index:
         name = "tests-schools-serializer"
