@@ -178,7 +178,10 @@ class DocumentRegistry:
             obj = obj_or_pk
         serializer = entry.serializer(instance=obj)
         return documentType(
-            meta={"id": getattr(obj, documentType.DJANGO_ID_FIELD)}, **serializer.data
+            meta={
+                "id": getattr(obj, documentType.DJANGO_ID_FIELD),
+            },
+            **serializer.data,
         )
 
     def model_to_index_and_id_and_data(self, obj):

@@ -23,6 +23,14 @@ class DocumentTestCase(TestCase):
         assert doc.name == s.name
         assert doc.address == s.address
 
+        # from django
+        doc1 = SchoolDocument.from_django(s)
+
+        assert doc1.name == s.name
+        assert doc1.address == s.address
+        assert doc1.id == s.id
+        assert doc1.meta.id == s.id
+
         # search
 
         found = list(SchoolDocument.search().filter("term", name="test"))
