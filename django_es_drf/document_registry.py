@@ -35,6 +35,8 @@ class DjangoDocument(Document):
         setattr(self, self.DOCUMENT_ID_FIELD, _id)
         self.meta._id = _id
         self.meta.id = _id
+        if "refresh" not in kwargs:
+            kwargs["refresh"] = True
         return super().save(**kwargs)
 
     def delete(self, using=None, index=None, **kwargs):
@@ -42,6 +44,8 @@ class DjangoDocument(Document):
         obj = entry.model.objects.get(**{self.DJANGO_ID_FIELD: self.meta._id})
         with disabled_es():
             obj.delete()
+        if "refresh" not in kwargs:
+            kwargs["refresh"] = True
         return super().delete(using=using, index=index, **kwargs)
 
     @classmethod
