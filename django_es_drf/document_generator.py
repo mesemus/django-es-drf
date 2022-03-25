@@ -53,30 +53,35 @@ def generate_mapping(prefix, ctx, existing_mapping, included, excluded, serializ
 
     for fld_name, fld in serializer.fields.items():
         prefixed_name = prefix + fld_name
+        if fld_name in existing_mapping:
+            continue
         if included and prefixed_name not in included:
             continue
         if excluded and prefixed_name in excluded:
             continue
-        if fld_name in existing_mapping:
-            continue
-        # TODO: generate object and nested here
-        if isinstance(fld, ListSerializer):
-            multi = True
-            fld = fld.child
-        else:
-            multi = False
-        es_field_callable = get_es_field_from_serializer_field(prefixed_name, fld, ctx)
-        if inspect.isclass(es_field_callable) and issubclass(
-            es_field_callable, e.Field
-        ):
-            new_mapping[fld_name] = es_field_callable(multi=multi)
-        elif callable(es_field_callable):
-            new_mapping[fld_name] = es_field_callable(fld_name, fld, ctx, multi=multi)
-        else:
-            raise ValueError(
-                f"Bad value for field {prefixed_name}: expecting DSL field or callable, got {es_field_callable}"
-            )
+
+        new_mapping[fld_name] = generate_field_mapping(
+            prefixed_name, fld_name, fld, ctx
+        )
     return new_mapping
+
+
+def generate_field_mapping(prefixed_name, fld_name, fld, ctx):
+    # TODO: generate object and nested here
+    if isinstance(fld, ListSerializer):
+        multi = True
+        fld = fld.child
+    else:
+        multi = False
+    es_field_callable = get_es_field_from_serializer_field(prefixed_name, fld, ctx)
+    if inspect.isclass(es_field_callable) and issubclass(es_field_callable, e.Field):
+        return es_field_callable(multi=multi)
+    elif callable(es_field_callable):
+        return es_field_callable(fld_name, fld, ctx, multi=multi)
+    else:
+        raise ValueError(
+            f"Bad value for field {prefixed_name}: expecting DSL field or callable, got {es_field_callable}"
+        )
 
 
 def get_es_field_from_serializer_field(prefixed_name, fld, ctx):

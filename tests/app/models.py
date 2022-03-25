@@ -1,4 +1,5 @@
 from django.db import models
+from rest_framework import serializers
 
 from django_es_drf import registry, DjangoDocument
 import elasticsearch_dsl as e
@@ -54,3 +55,28 @@ class SchoolWithForeignDocument(DjangoDocument):
 class SchoolWithM2MDocument(DjangoDocument):
     class Index:
         name = "tests-schools-with-m2m"
+
+
+class SchoolWithSerializer(models.Model):
+    name = models.CharField(max_length=100)
+    address = models.TextField()
+
+
+class SchoolSerializer(serializers.ModelSerializer):
+    name_with_address = serializers.SerializerMethodField()
+    name_with_address.output_type = serializers.CharField()
+
+    def get_name_with_address(self, instance):
+        return f"{instance.name}, {instance.address}"
+
+    get_name_with_address.output_type = serializers.CharField()
+
+    class Meta:
+        model = SchoolWithSerializer
+        exclude = ()
+
+
+@registry.register(SchoolWithSerializer, serializer=SchoolSerializer)
+class SchoolWithSerializerDocument(DjangoDocument):
+    class Index:
+        name = "tests-schools-serializer"

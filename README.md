@@ -5,27 +5,27 @@
 A simple integration layer between Django, Elasticsearch and Django rest framework
 
 - [Django ES DRF](#django-es-drf)
-  - [Model and ES Document example](#model-and-es-document-example)
-  - [DRF example](#drf-example)
-    - [Returned fields from listing](#returned-fields-from-listing)
-    - [Search, facets](#search-facets)
-      - [Search via "q" GET parameters](#search-via-q-get-parameters)
-        - [Simple search](#simple-search)
-        - [Luqum search](#luqum-search)
-      - [Facets and faceted filtering](#facets-and-faceted-filtering)
-  - [Django Document and mapping](#django-document-and-mapping)
-    - [Custom declaration for fields](#custom-declaration-for-fields)
-    - [Excluding fields](#excluding-fields)
-    - [Custom mapping between serializer fields and ES fields](#custom-mapping-between-serializer-fields-and-es-fields)
-    - [Disabling the mapping](#disabling-the-mapping)
-    - [Relations](#relations)
-  - [Serializer](#serializer)
-  - [Objects and nested](#objects-and-nested)
-
+    - [Model and ES Document example](#model-and-es-document-example)
+    - [DRF example](#drf-example)
+        - [Returned fields from listing](#returned-fields-from-listing)
+        - [Search, facets](#search-facets)
+            - [Search via "q" GET parameters](#search-via-q-get-parameters)
+                - [Simple search](#simple-search)
+                - [Luqum search](#luqum-search)
+            - [Facets and faceted filtering](#facets-and-faceted-filtering)
+    - [Django Document and mapping](#django-document-and-mapping)
+        - [Custom declaration for fields](#custom-declaration-for-fields)
+        - [Excluding fields](#excluding-fields)
+        - [Custom mapping between serializer fields and ES fields](#custom-mapping-between-serializer-fields-and-es-fields)
+        - [Disabling the mapping](#disabling-the-mapping)
+        - [Relations](#relations)
+    - [Serializer](#serializer)
+    - [Objects and nested](#objects-and-nested)
 
 ## Model and ES Document example
 
-To declare your own document, create a model and register it with a DjangoDocument
+To declare a document, create a model and register it with a subclass of DjangoDocument. You do not need to declare any
+fields on the document - they are generated automatically.
 
 ```python
 from django.db import models
@@ -58,7 +58,7 @@ for s in SchoolDocument.search().filter('term', name='Blah'):
     s.save()  # will save django and index to ES
 ```
 
-Feel free to work with django objects if you prefer - they will get persisted into Elastic whenever they are saved:
+You can work with django objects if you prefer - they will get persisted into Elastic whenever they are saved:
 
 ```python
 s = School.objects.create(name='blah', address='somewhere')
@@ -67,7 +67,7 @@ doc = SchoolDocument.get(s.id)
 print(doc.name)
 ```
 
-You can switch between django and document:
+You can switch between django and document representations:
 
 ```python
 django_school = School.objects.get(pk=1)
@@ -82,10 +82,10 @@ assert django_school is not django_again
 
 ## DRF example
 
-ESViewSet is an extensions of `ModelViewSet`, so feel free to use any of its features. You have to remember though that
+ESViewSet is inherited from `ModelViewSet`, so feel free to use any of its features. You have to remember that
 `get_object` will give you DSL Document, not an instance of model.
 
-To create you viewset, specify a document, not a model/queryset.
+In the viewset, specify a document, not a model/queryset.
 
 ```python
 from django_es_drf import ESViewSet
@@ -95,7 +95,7 @@ class SchoolAPI(ESViewSet):
     document = SchoolDocument
 ```
 
-If you need to pre-filter the initial queryset, override `get_queryset`, call the parent and add your own initial
+If you need to pre-filter the initial queryset, override the `get_queryset`, call the parent and add your own initial
 filter:
 
 ```python
@@ -119,30 +119,35 @@ You can specify the props returned on the viewset:
 ```python
 class SchoolAPI(ESViewSet):
     document = SchoolDocument
-    source = ['name']
+    source = ['id', 'name']
 ```
 
-or alternatively, use `_include` or `_exclude` GET params containing a list of fields separated by commas
-(if source is set, they are active only on the fields from the source, otherwise from all fields)
+or alternatively, use `_include` or `_exclude` GET parameters containing a list of fields separated by commas
+(if `source` is set, they are active only on the fields from the source, otherwise from all fields)
 
 The filter is only used for listing and listing-like operations (that is those where object id is not present in the
 URL). If you want to restrict the filter only on some calls, add a `is_dynamic_source_filtering_enabled(self, request)`
 method on the viewset class.
 
+Example:
+
+```
+GET /schools/?_exclude=address
+```
+
 ### Search, facets
 
-DRF filter backends are used for both aggregations and search.
+DRF filter backends (that is `filter_backends` property on viewset) are used for both aggregations and search.
 
 #### Search via "q" GET parameters
 
-Implicitly the `filter_backends` contain `QueryFilterBackend` that parses and interprets `q` and `parser` GET
-parameters:
+Implicitly `filter_backends` contain `QueryFilterBackend` that parses and interprets `q` and `parser` GET parameters:
 
-* the `parser` parameter contains name of a query interpreter that will be used. The interpreters are registered on '
-  Viewset.query_interpreters' dictionary which defaults
+* the `parser` parameter contains name of the query interpreter that will be used. The interpreters are registered on '
+  ESViewSet.query_interpreters' dictionary which defaults
   to ``{"simple": simple_query_interpreter, "luqum": luqum_query_interpreter}``. If the parameter is not passed,
-  Viewset.default_query_interpreter interpreter is used. If invalid value is passed, no result is returned.
-* `q` parameter is passed to the interpreter which applies the query to a queryset
+  ESViewSet.default_query_interpreter is used. If invalid value is passed, empty result list is returned.
+* `q` parameter is passed to the interpreter which applies it to a queryset
 
 ##### Simple search
 
@@ -151,7 +156,7 @@ The simple interpreter performs `multi_match` operation on all fields.
 ##### Luqum search
 
 This search interpreter takes the content of the query and interprets it as a luqum query string. This library enables
-use of `nested` mapping in query and using of boolean operators.
+use of `nested` mapping in query and supports boolean operators.
 See [https://luqum.readthedocs.io/en/latest/about.html](https://luqum.readthedocs.io/en/latest/about.html)
 for details on the language/capabilities.
 
@@ -198,6 +203,90 @@ aggs = [
 Any options not interpreted by ES (in this case 'label') are copied into the API output (and might be used, for example,
 in UI renderer).
 
+Sample returned value (aggs = `aggs = [BucketAgg("name"), BucketAgg("address")]`):
+
+```json
+{
+  "aggs": [
+    {
+      "code": "name",
+      "__missing__": 0,
+      "__count__": 2,
+      "doc_count_error_upper_bound": 0,
+      "sum_other_doc_count": 0,
+      "buckets": [
+        {
+          "key": "test 1",
+          "doc_count": 1
+        },
+        {
+          "key": "test 2",
+          "doc_count": 1
+        }
+      ]
+    },
+    {
+      "code": "address",
+      "__missing__": 0,
+      "__count__": 2,
+      "doc_count_error_upper_bound": 0,
+      "sum_other_doc_count": 0,
+      "buckets": [
+        {
+          "key": "blah",
+          "doc_count": 2
+        }
+      ]
+    }
+  ],
+  ...
+}
+```
+
+##### Filtering by aggregation buckets
+
+To filter by aggregation buckets, add `?f=<bucket_code>:<value>:<bucket_code>:<value>...` to the url. 
+URLEncode '%' and ':' if there is ':' in the unlikely case these chars are in the value. If you need 
+a different syntax, define a `parse_facet_query(self, request)` method on you viewset that returns 
+either None or dictionary with facet code as a key and a list of values to match as the value.
+
+Example:
+
+```GET /schools/?f=name:test 2```
+
+Response:
+
+```json5
+            {
+  "count": 1,
+  // ...
+  "hits": [
+    {
+      "id": 2,
+      "name": "test 2",
+      "address": "blah"
+    }
+  ],
+  "aggs": [
+    // ...
+  ]
+}
+```
+
+##### Filtering without aggregations
+
+A bucket aggregation can be used just to filter the queryset, not to generate any aggregations. To do so, specify
+`display=False` option to the aggregation. The `?f` will still be available, but no aggregations will be generated.
+
+```python
+aggs = [
+    BucketAgg('available', display=False),
+    NestedAgg("tagsWithYear")
+        .bucket("tagsWithYear.tag", label="Tag")
+        .bucket("tagsWithYear.year", label="Year"),
+]
+```
+
 ## Django Document and mapping
 
 ### Custom declaration for fields
@@ -209,7 +298,7 @@ Any fields that are already present on the document will be keep as they are. In
 import elasticsearch_dsl as e
 
 
-@registry.register(School, SchoolSerializer)
+@registry.register(School)
 class SchoolDocument(DjangoDocument):
     name = e.Text()
 
@@ -219,11 +308,11 @@ class SchoolDocument(DjangoDocument):
 
 ### Excluding fields
 
-To exclude a field from the automatic generation, add it to `excluded_fields`:
+To exclude a field from the automatic generation, add it to `excluded`. If "nested/object" mapping will be generated,
+you can use a dot-separated path.
 
 ```python
-@registry.register(School, SchoolSerializer,
-                   excluded_fields=['address'])
+@registry.register(School, excluded=['address'])
 class SchoolDocument(DjangoDocument):
     class Index:
         name = "schools"
@@ -237,11 +326,12 @@ The context is an instance of `RegistrationContext`.
 
 ```python
 import elasticsearch_dsl as e
+import rest_framework.serializers as s
 
 
-@registry.register(School, SchoolSerializer,
+@registry.register(School,
                    mapping={
-                       TextField: lambda fld, ctx: e.Keyword()
+                       s.CharField: lambda fld, ctx, **kwargs: e.Keyword()
                    })
 class SchoolDocument(DjangoDocument):
     class Index:
@@ -256,7 +346,7 @@ Add `generate=False` to decorator's parameters:
 import elasticsearch_dsl as e
 
 
-@registry.register(School, SchoolSerializer,
+@registry.register(School,
                    generate=False)
 class SchoolDocument(DjangoDocument):
     # you need to provide your own mapping here
@@ -320,16 +410,45 @@ class SchoolDocument(DjangoDocument):
         name = "schools"
 ```
 
-*Note:* There is no support for creating nested objects. If you need this support,
-you'll have to write your own `create`/`update` method
-on the serializer.
+If you want to change the type to nested:
+
+```python
+import elasticsearch_dsl as e
+
+@registry.register(School, serializer_meta={"depth": 1}, mapping={
+    'city': e.Nested
+})
+class SchoolDocument(DjangoDocument):
+    class Index:
+        name = "schools"
+
+```
+
+*Note:* There is no support for creating nested objects. If you need this support, you'll have to write your
+own `create`/`update` method on the serializer.
 
 ## Serializer
 
-The serializer is just a plain DRF serializer that converts django fields to document's fields. When autogenerated
-mapping is used, just use the plain empty serializer.
+Optionally you might want to provide your own serializer, to transform/generate additional fields into the document.
 
-Note: see Relations section above if you need to serialize relations
+The serializer is just a plain DRF serializer that converts django fields to document's fields, there is nothing fancy
+about it.
 
-## Objects and nested
+*Note:* If you use `SerializerMethodField`, be sure to insert a return type (as field from serializers) on the method as well. 
+If no type is used, it will be assumed to be a string:
 
+```python
+from rest_framework import serializers
+
+class SchoolSerializer(serializers.ModelSerializer):
+    name_with_address = serializers.SerializerMethodField()
+
+    def get_name_with_address(self, instance):
+        return f"{instance.name}, {instance.address}"
+    # v-- do not forget to add this
+    get_name_with_address.output_type = serializers.CharField
+
+    class Meta:
+        model = School
+        exclude = ()
+```

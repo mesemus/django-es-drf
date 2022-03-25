@@ -17,9 +17,13 @@ class ESAggsFilterBackend(BaseESFilterBackend):
         for agg in view.aggs:
             agg = agg.top
             agg.apply(queryset.aggs)
-        f = request.GET.get("f", None)
+        if hasattr(view, "parse_facet_query"):
+            f = view.parse_facet_query(request)
+        else:
+            f = request.GET.get("f", None)
+            if f:
+                f = self.parse_facets(f)
         if f:
-            f = self.parse_facets(f)
             for agg in view.aggs:
                 agg = agg.top
                 for query in agg.filter(f):

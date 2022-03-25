@@ -77,6 +77,46 @@ class DRFTestCase(TestCase):
             },
         )
 
+    def test_search_by_agg(self):
+        School.objects.create(name="test 1", address="blah")
+        School.objects.create(name="test 2", address="blah")
+
+        resp = self.client.get("/schools2/?f=name:test 2").json()
+        self.assertDictEqual(
+            resp,
+            {
+                "count": 1,
+                "page": 1,
+                "size": 10,
+                "pages": 1,
+                "next": None,
+                "previous": None,
+                "hits": [
+                    {"id": 2, "name": "test 2", "address": "blah"},
+                ],
+                "aggs": [
+                    {
+                        "code": "name",
+                        "__missing__": 0,
+                        "__count__": 1,
+                        "doc_count_error_upper_bound": 0,
+                        "sum_other_doc_count": 0,
+                        "buckets": [
+                            {"key": "test 2", "doc_count": 1},
+                        ],
+                    },
+                    {
+                        "code": "address",
+                        "__missing__": 0,
+                        "__count__": 1,
+                        "doc_count_error_upper_bound": 0,
+                        "sum_other_doc_count": 0,
+                        "buckets": [{"key": "blah", "doc_count": 1}],
+                    },
+                ],
+            },
+        )
+
     def test_source_filtering(self):
         SchoolAPI.source = ["name"]
         School.objects.create(name="test", address="blah")
