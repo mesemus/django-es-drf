@@ -7,6 +7,7 @@ from django.db.models import Model
 from rest_framework.serializers import ModelSerializer
 
 from . import settings
+from .drf.serializers import StrictModelSerializer
 from .indexer import disabled_es
 from .json import to_plain_json
 
@@ -108,7 +109,7 @@ class DocumentRegistry:
             # generate serializer if not passed
             serializer = type(
                 f"{model.__name__}Serializer",
-                (ModelSerializer,),
+                (StrictModelSerializer,),
                 {
                     "Meta": type(
                         "Meta",

@@ -355,7 +355,9 @@ class DRFTestCase(TestCase):
             content_type="application/json",
             data={"address": "blah", "name": "first", "invalid": "123"},
         ).json()
-        self.assertEqual(resp, ["Unexpected keys {'invalid'}"])
+        self.assertDictEqual(
+            resp, {"non_field_errors": ["Unexpected keys {'invalid'}"]}
+        )
 
     def test_update(self):
         School.objects.create(name="first", address="blah")

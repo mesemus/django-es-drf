@@ -1,7 +1,33 @@
 from typing import Type
 
 from rest_framework.exceptions import ValidationError
-from rest_framework.serializers import BaseSerializer, Serializer
+from rest_framework.fields import empty
+from rest_framework.serializers import (
+    BaseSerializer,
+    Serializer,
+    ModelSerializer,
+    as_serializer_error,
+)
+
+
+class StrictModelSerializer(ModelSerializer):
+    def run_validation(self, data=empty):
+        validated_data = super().run_validation(data)
+        if data is not empty:
+            data_keys = set(data.keys())
+            validated_keys = set(validated_data.keys())
+
+            for fld in self.fields.values():
+                if fld.read_only and fld.field_name in data_keys:
+                    data_keys.remove(fld.field_name)
+
+            if data_keys != validated_keys:
+                raise ValidationError(
+                    detail=as_serializer_error(
+                        ValidationError(f"Unexpected keys {data_keys - validated_keys}")
+                    )
+                )
+        return validated_data
 
 
 class ESDocumentSerializer(BaseSerializer):
@@ -14,10 +40,6 @@ class ESDocumentSerializer(BaseSerializer):
     def to_internal_value(self, data):
         serializer = self.django_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        if data.keys() != serializer.validated_data.keys():
-            raise ValidationError(
-                f"Unexpected keys {data.keys() - serializer.validated_data.keys()}"
-            )
         return serializer.validated_data
 
     def to_representation(self, instance):
