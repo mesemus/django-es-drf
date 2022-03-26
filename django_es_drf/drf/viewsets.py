@@ -1,3 +1,5 @@
+from functools import partial
+
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.functional import classproperty
@@ -11,8 +13,9 @@ from .backends.query_interpreters import (
 )
 from .pagination import ESPagination
 from .renderers import ESRenderer
-from .serializers import CopyESSerializer
+from .serializers import ESDocumentSerializer
 from .backends.source import DynamicSourceBackend
+from .. import registry
 
 
 class ESViewSet(viewsets.ModelViewSet):
@@ -23,7 +26,7 @@ class ESViewSet(viewsets.ModelViewSet):
     ]
     aggs = ()
     filter_backends = [DynamicSourceBackend, ESAggsFilterBackend, QueryFilterBackend]
-    serializer_class = CopyESSerializer
+    serializer_class = ESDocumentSerializer
     query_interpreters = {
         "simple": simple_query_interpreter,
         "luqum": luqum_query_interpreter,
@@ -61,38 +64,8 @@ class ESViewSet(viewsets.ModelViewSet):
 
         return obj
 
-    # @property
-    # def lookup_field(self):
-    #     if self.action in self.es_actions:
-    #         return self.es_lookup_field
-    #     return self.django_lookup_field
-    #
-    # def get_object(self):
-    #     if self.action not in self.es_actions:
-    #         return super().get_object()
-    #
-    #     queryset = self.filter_queryset(self.get_queryset())
-    #     lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
-    #     filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
-    #     data = list(queryset.filter(Q('term', **filter_kwargs))[:1])
-    #     if not data:
-    #         raise Http404()
-    #     obj = data[0]
-    #
-    #     self.check_object_permissions(self.request, obj)
-    #
-    #     return obj
-    #
-    # def filter_queryset(self, queryset):
-    #     return super().filter_queryset(queryset)
-    #
-    # def get_list_queryset(self):
-    #     return self.queryset.model.DocumentMeta.document.search()
-    #
-    # def get_detail_queryset(self):
-    #     return super().get_queryset()
-    #
-    # def get_serializer_class(self):
-    #     if self.action in self.es_actions:
-    #         return self.es_serializer
-    #     return super().get_serializer_class()
+    def get_serializer(self, *args, **kwargs):
+        kwargs["django_serializer"] = registry.get_registry_entry_from_document(
+            self.document
+        ).serializer
+        return super().get_serializer(*args, **kwargs)

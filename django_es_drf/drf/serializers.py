@@ -1,11 +1,27 @@
-from rest_framework.serializers import BaseSerializer
+from typing import Type
+
+from rest_framework.exceptions import ValidationError
+from rest_framework.serializers import BaseSerializer, Serializer
 
 
-class CopyESSerializer(BaseSerializer):
+class ESDocumentSerializer(BaseSerializer):
+    django_serializer: Type[Serializer]
+
+    def __init__(self, *args, django_serializer=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.django_serializer = django_serializer
+
     def to_internal_value(self, data):
-        return data
+        serializer = self.django_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        if data.keys() != serializer.validated_data.keys():
+            raise ValidationError(
+                f"Unexpected keys {data.keys() - serializer.validated_data.keys()}"
+            )
+        return serializer.validated_data
 
     def to_representation(self, instance):
+        # just return the document
         return instance
 
     def create(self, validated_data):

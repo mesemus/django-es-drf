@@ -349,6 +349,14 @@ class DRFTestCase(TestCase):
             {"address": "blah", "id": _id, "name": "first"},
         )
 
+    def test_create_invalid(self):
+        resp = self.client.post(
+            "/schools/",
+            content_type="application/json",
+            data={"address": "blah", "name": "first", "invalid": "123"},
+        ).json()
+        self.assertEqual(resp, ["Unexpected keys {'invalid'}"])
+
     def test_update(self):
         School.objects.create(name="first", address="blah")
         resp = self.client.put(
