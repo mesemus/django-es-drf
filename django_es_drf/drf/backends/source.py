@@ -18,7 +18,7 @@ class DynamicSourceBackend(BaseFilterBackend):
         # only in listing urls
         lookup_url_kwarg = view.lookup_url_kwarg or view.lookup_field
         if lookup_url_kwarg in view.kwargs:
-            return
+            return queryset
 
         include = request.GET.get("_include", None)
         exclude = request.GET.get("_exclude", None)

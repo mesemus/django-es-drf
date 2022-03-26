@@ -7,7 +7,7 @@ import elasticsearch_dsl as e
 
 class School(models.Model):
     name = models.CharField(max_length=100)
-    address = models.TextField()
+    address = models.TextField(null=True, blank=True)
 
 
 class SchoolWithNameAsText(models.Model):

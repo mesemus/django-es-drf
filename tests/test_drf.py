@@ -230,7 +230,6 @@ class DRFTestCase(TestCase):
         School.objects.create(name="second", address="blah")
 
         resp = self.client.get("/schools/?q=first").json()
-        print(resp)
         self.assertDictEqual(
             resp,
             {
@@ -246,7 +245,6 @@ class DRFTestCase(TestCase):
         )
 
         resp = self.client.get("/schools/?q=blah").json()
-        print(resp)
         self.assertDictEqual(
             resp,
             {
@@ -272,7 +270,6 @@ class DRFTestCase(TestCase):
         resp = self.client.get(
             "/schools/?q=name:first AND address:blah&parser=luqum"
         ).json()
-        print(resp)
         self.assertDictEqual(
             resp,
             {
@@ -295,7 +292,6 @@ class DRFTestCase(TestCase):
         resp = self.client.get(
             "/schools/?q=name:first AND address:blah&parser=bad"
         ).json()
-        print(resp)
         self.assertDictEqual(
             resp,
             {
@@ -308,4 +304,75 @@ class DRFTestCase(TestCase):
                 "hits": [],
                 "aggs": {},
             },
+        )
+
+    def test_get(self):
+        School.objects.create(name="first", address="blah")
+        resp = self.client.get("/schools/1/").json()
+        self.assertDictEqual(
+            resp,
+            {"address": "blah", "id": 1, "name": "first"},
+        )
+
+        resp = self.client.get("/schools/2/")
+        assert resp.status_code == 404
+
+    def test_delete(self):
+        School.objects.create(name="first", address="blah")
+        resp = self.client.get("/schools/1/").json()
+        self.assertDictEqual(
+            resp,
+            {"address": "blah", "id": 1, "name": "first"},
+        )
+
+        resp = self.client.delete("/schools/1/")
+        assert resp.status_code == 204
+
+        resp = self.client.get("/schools/1/")
+        assert resp.status_code == 404
+
+    def test_create(self):
+        resp = self.client.post(
+            "/schools/",
+            content_type="application/json",
+            data={"address": "blah", "name": "first"},
+        ).json()
+        _id = resp["id"]
+        self.assertDictEqual(
+            resp,
+            {"address": "blah", "id": _id, "name": "first"},
+        )
+
+        resp = self.client.get(f"/schools/{_id}/").json()
+        self.assertDictEqual(
+            resp,
+            {"address": "blah", "id": _id, "name": "first"},
+        )
+
+    def test_update(self):
+        School.objects.create(name="first", address="blah")
+        resp = self.client.put(
+            "/schools/1/", content_type="application/json", data={"name": "second"}
+        )
+        assert resp.status_code == 200
+        self.assertDictEqual(resp.json(), {"id": 1, "name": "second"})
+        resp = self.client.get("/schools/1/").json()
+        self.assertDictEqual(
+            resp,
+            {"id": 1, "name": "second"},
+        )
+
+    def test_partial_update(self):
+        School.objects.create(name="first", address="blah")
+        resp = self.client.patch(
+            "/schools/1/", content_type="application/json", data={"name": "second"}
+        )
+        assert resp.status_code == 200
+        self.assertDictEqual(
+            resp.json(), {"address": "blah", "id": 1, "name": "second"}
+        )
+        resp = self.client.get("/schools/1/").json()
+        self.assertDictEqual(
+            resp,
+            {"address": "blah", "id": 1, "name": "second"},
         )

@@ -41,7 +41,7 @@ class DjangoDocument(Document):
 
     def delete(self, using=None, index=None, **kwargs):
         entry = registry.get_registry_entry_from_document(type(self))
-        obj = entry.model.objects.get(**{self.DJANGO_ID_FIELD: self.meta._id})
+        obj = entry.model.objects.get(**{self.DJANGO_ID_FIELD: self.meta.id})
         with disabled_es():
             obj.delete()
         if "refresh" not in kwargs:
