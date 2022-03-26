@@ -33,6 +33,13 @@ class SchoolWithM2M(models.Model):
     people = models.ManyToManyField(Person, related_name="+")
 
 
+class SchoolForSerializerGenerator(models.Model):
+    name = models.CharField(max_length=100, null=True, blank=True)
+    int_fld = models.IntegerField(null=True, blank=True)
+    float_fld = models.FloatField(null=True, blank=True)
+    bool_fld = models.BooleanField(null=True, blank=True)
+
+
 @registry.register(School)
 class SchoolDocument(DjangoDocument):
     class Index:
@@ -81,3 +88,20 @@ class SchoolSerializer(serializers.ModelSerializer):
 class SchoolWithSerializerDocument(DjangoDocument):
     class Index:
         name = "tests-schools-serializer"
+
+
+# do not use model serializer here as we want to generate fields from the document
+class EmptySerializer(serializers.Serializer):
+    def create(self, validated_data):
+        return SchoolForSerializerGenerator.objects.create(**validated_data)
+
+
+@registry.register(SchoolForSerializerGenerator, serializer=EmptySerializer)
+class SchoolForSerializerGeneratorDocument(DjangoDocument):
+    name = e.Keyword()
+    int_fld = e.Integer()
+    float_fld = e.Float()
+    bool_fld = e.Boolean()
+
+    class Index:
+        name = "tests-schools-serializer-generator"

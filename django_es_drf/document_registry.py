@@ -76,6 +76,7 @@ class DocumentRegistry:
         included=(),
         excluded=(),
         mapping=None,
+        serializer_mapping=None,
     ):
         """
         A decorator that registers a model with a DSL document. Usage
@@ -104,6 +105,10 @@ class DocumentRegistry:
         :return:                decorator
         """
         mapping = {**settings.DJANGO_ES_DEFAULT_FIELD_MAPPING, **(mapping or {})}
+        serializer_mapping = {
+            **settings.ES_DRF_DEFAULT_FIELD_MAPPING,
+            **(serializer_mapping or {}),
+        }
 
         if serializer is None:
             # generate serializer if not passed
@@ -133,9 +138,15 @@ class DocumentRegistry:
 
         def delayed_registration(document, model, serializer):
             from .document_generator import generate_extra_document_fields
+            from django_es_drf.serializer_generator import (
+                generate_extra_serializer_fields,
+            )
 
             document = generate_extra_document_fields(
                 document, model, serializer, mapping, included, excluded
+            )
+            serializer = generate_extra_serializer_fields(
+                document, model, serializer, serializer_mapping, included, excluded
             )
             do_registration(document, model, serializer)
             return document

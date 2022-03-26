@@ -22,3 +22,7 @@ def _build_mapping(fld_name, fld, ctx):
         nested_prefix, nested_context, {}, ctx.included, ctx.excluded, fld
     )
     return new_mapping
+
+
+def serializer_object_builder(fld_name, fld, ctx, **kwargs):
+    raise NotImplementedError()
