@@ -159,3 +159,16 @@ class NestedAgg(AggBase):
         children = list(super().filter(facets_and_values))
         if children:
             yield Q("nested", path=self.path, query=Q("bool", must=children))
+
+
+class SeparatorAgg(AggBase):
+    insert_into_parent = True
+
+    def __init__(self, **kwargs):
+        super().__init__("--separator--", **kwargs)
+
+    def process_result(self, data):
+        ret = {"separator": True}
+        if self.label:
+            ret["label"] = self.label
+        return ret
