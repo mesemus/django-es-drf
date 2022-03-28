@@ -91,6 +91,6 @@ def get_es_field_from_serializer_field(prefixed_name, fld, ctx):
         if m in ctx.mapping:
             return ctx.mapping[m]
     raise KeyError(
-        f"Do not have ES mapping for {type(fld)}. Either specify it in the `mapping` parameter"
+        f"Do not have ES mapping for {prefixed_name}: {type(fld)}. Either specify it in the `mapping` parameter"
         f"or exclude it with `excluded`"
     )

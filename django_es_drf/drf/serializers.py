@@ -8,6 +8,7 @@ from rest_framework.serializers import (
     ModelSerializer,
     as_serializer_error,
 )
+from rest_framework.utils.serializer_helpers import ReturnDict
 
 
 class StrictModelSerializer(ModelSerializer):
@@ -65,3 +66,22 @@ class ESDocumentSerializer(BaseSerializer):
             instance = doctype(meta={"id": instance.meta.id}, **validated_data)
         instance.save()
         return instance
+
+    def get_initial(self):
+        return super().get_initial() or {}
+
+    @property
+    def fields(self):
+        return self.django_serializer().fields
+
+    @property
+    def data(self):
+        ret = super().data
+        if isinstance(ret, dict):
+            return ReturnDict(ret, serializer=self)
+        else:
+            return ret
+
+    def __iter__(self):
+        # TODO: implement this to get better support for DRF debug interface
+        return iter([])

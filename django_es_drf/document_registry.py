@@ -142,12 +142,20 @@ class DocumentRegistry:
                 generate_extra_serializer_fields,
             )
 
-            document = generate_extra_document_fields(
-                document, model, serializer, mapping, included, excluded
-            )
-            serializer = generate_extra_serializer_fields(
-                document, model, serializer, serializer_mapping, included, excluded
-            )
+            try:
+                document = generate_extra_document_fields(
+                    document, model, serializer, mapping, included, excluded
+                )
+            except:
+                print(f"Error generating extra document fields for model {model}")
+                raise
+            try:
+                serializer = generate_extra_serializer_fields(
+                    document, model, serializer, serializer_mapping, included, excluded
+                )
+            except:
+                print(f"Error generating extra serializer fields for model {model}")
+                raise
             do_registration(document, model, serializer)
             return document
 

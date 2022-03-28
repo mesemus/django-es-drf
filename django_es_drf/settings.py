@@ -35,6 +35,9 @@ ES_DRF_DEFAULT_FIELD_MAPPING = get(
         e.Keyword: lambda fld_name, fld, ctx, **kwargs: fields.CharField(
             **{"required": False, **kwargs}
         ),
+        e.Text: lambda fld_name, fld, ctx, **kwargs: fields.CharField(
+            **{"required": False, **kwargs}
+        ),
         e.Integer: lambda fld_name, fld, ctx, **kwargs: fields.IntegerField(
             **{"required": False, **kwargs}
         ),
