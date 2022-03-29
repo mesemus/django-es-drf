@@ -207,6 +207,7 @@ class DocumentRegistry:
     def model_to_index_and_id_and_data(self, obj):
         entry = self.get_registry_entry_from_django(type(obj))
         doc = self.load_from_django_object(entry.document, obj)
+        doc.full_clean()
         return doc._index._name, doc.meta.id, to_plain_json(doc)
 
     def get_registry_entry_from_document(

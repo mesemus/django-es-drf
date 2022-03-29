@@ -5,6 +5,9 @@ import threading
 from django.conf import settings
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl.connections import get_connection
+import logging
+
+log = logging.getLogger("django_es_drf")
 
 es_lock = threading.local()
 
@@ -72,7 +75,11 @@ def es_index_internal(objects, refresh=True):
         return
     actions = []
     for obj, should_delete in objects:
-        idx, _id, data = registry.model_to_index_and_id_and_data(obj)
+        try:
+            idx, _id, data = registry.model_to_index_and_id_and_data(obj)
+        except:
+            log.exception("Error in indexing object %s:%s", type(obj), obj.pk)
+            continue
 
         if should_delete and _id:
             actions.append({"_op_type": "delete", "_index": idx, "_id": _id})
