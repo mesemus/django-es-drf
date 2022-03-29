@@ -10,3 +10,4 @@ from .drf.backends.filters import (
     BaseESFilterBackend,
 )
 from .drf.renderers import ESRenderer, ESEncoderClass
+from .indexer import bulk_es, disabled_es

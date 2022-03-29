@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-es-drf"
-version = "1.0.0a7"
+version = "1.0.0a8"
 description = "Simple django - elasticsearch - drf integration"
 authors = ["Mirek Simek <miroslav.simek@vscht.cz>"]
 readme="README.md"

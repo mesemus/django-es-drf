@@ -34,4 +34,6 @@ def serializer_object_builder(fld_name, fld, ctx, **kwargs):
     new_mapping = generate_mapping(
         nested_prefix, nested_context, None, ctx.included, ctx.excluded, fld._mapping
     )
-    return type(f"{fld_name}Serializer", (serializers.Serializer,), new_mapping)()
+    return type(f"{fld_name}Serializer", (serializers.Serializer,), new_mapping)(
+        required=False
+    )

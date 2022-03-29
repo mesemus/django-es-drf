@@ -77,7 +77,7 @@ def generate_field_mapping(prefixed_name, fld_name, fld, ctx):
         )
     if not multi:
         return ret
-    return serializers.ListField(child=ret)
+    return serializers.ListField(child=ret, required=False)
 
 
 def get_serializer_field_from_es_field(prefixed_name, fld, ctx):

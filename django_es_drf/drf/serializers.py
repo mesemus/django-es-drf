@@ -41,6 +41,8 @@ class ESDocumentSerializer(BaseSerializer):
     def to_internal_value(self, data):
         serializer = self.django_serializer(data=data)
         serializer.is_valid(raise_exception=True)
+        if hasattr(serializer, "document_data"):
+            return serializer.document_data
         return serializer.validated_data
 
     def to_representation(self, instance):
