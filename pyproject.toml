@@ -5,7 +5,6 @@ description = "Simple django - elasticsearch - drf integration"
 authors = ["Mirek Simek <miroslav.simek@vscht.cz>"]
 readme="README.md"
 
-
 [tool.poetry.dependencies]
 python = "^3.9"
 elasticsearch-dsl = "^7"
