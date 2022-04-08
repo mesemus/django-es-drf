@@ -43,6 +43,9 @@ def generate_extra_document_fields(
 
     if not new_mapping:
         return document
+    if not inspect.isclass(document):
+        # if the document is in fact a factory, get the real document
+        document = type(document())
     return type(document.__name__, (document,), new_mapping)
 
 

@@ -183,7 +183,7 @@ class DocumentRegistry:
         self.__finish_registration()
         entry = self.get_registry_entry_from_document(type(document))
         data = to_plain_json(document)
-        data.pop(document.DJANGO_ID_FIELD, None)
+        data.pop(document.DOCUMENT_ID_FIELD, None)
         try:
             id = getattr(document, document.DOCUMENT_ID_FIELD)
         except:
