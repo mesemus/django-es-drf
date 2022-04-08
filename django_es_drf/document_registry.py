@@ -66,17 +66,18 @@ class DocumentRegistry:
     def __init__(self):
         self.by_model = {}
         self.by_document = {}
+        self.delayed_registrations = []
 
     def register(
-        self,
-        model: Type[Model],
-        serializer: Type[ModelSerializer] = None,
-        serializer_meta: Dict[str, any] = None,
-        generate=True,
-        included=(),
-        excluded=(),
-        mapping=None,
-        serializer_mapping=None,
+            self,
+            model: Type[Model],
+            serializer: Type[ModelSerializer] = None,
+            serializer_meta: Dict[str, any] = None,
+            generate=True,
+            included=(),
+            excluded=(),
+            mapping=None,
+            serializer_mapping=None,
     ):
         """
         A decorator that registers a model with a DSL document. Usage
@@ -161,18 +162,28 @@ class DocumentRegistry:
 
         def wrapper(document: Type[Document]):
             if generate:
-                return lazy_object_proxy.Proxy(
+                ret = lazy_object_proxy.Proxy(
                     lambda: delayed_registration(document, model, serializer)
                 )
+                self.delayed_registrations.append(ret)
+                return ret
             else:
                 do_registration(document, model, serializer)
                 return document
 
         return wrapper
 
+    def __finish_registration(self):
+        if self.delayed_registrations:
+            for reg in self.delayed_registrations:
+                reg()
+            self.delayed_registrations = None
+
     def save_to_django_object(self, document, django_object=None):
+        self.__finish_registration()
         entry = self.get_registry_entry_from_document(type(document))
         data = to_plain_json(document)
+        data.pop(document.DJANGO_ID_FIELD, None)
         try:
             id = getattr(document, document.DOCUMENT_ID_FIELD)
         except:
@@ -191,6 +202,7 @@ class DocumentRegistry:
             return serializer.update(django_object, serializer.validated_data)
 
     def load_from_django_object(self, documentType: Type[Document], obj_or_pk):
+        self.__finish_registration()
         entry = self.get_registry_entry_from_document(documentType)
         if not isinstance(obj_or_pk, entry.model):
             obj = entry.model.objects.get(**{documentType.DJANGO_ID_FIELD: obj_or_pk})
@@ -211,8 +223,9 @@ class DocumentRegistry:
         return doc._index._name, doc.meta.id, to_plain_json(doc)
 
     def get_registry_entry_from_document(
-        self, document: Type[Document]
+            self, document: Type[Document]
     ) -> DocumentRegistryEntry:
+        self.__finish_registration()
         for m in document.mro():
             if m in self.by_document:
                 return self.by_document[m]
@@ -221,8 +234,9 @@ class DocumentRegistry:
         )
 
     def get_registry_entry_from_django(
-        self, django: Type[Model]
+            self, django: Type[Model]
     ) -> DocumentRegistryEntry:
+        self.__finish_registration()
         for m in django.mro():
             if m in self.by_model:
                 return self.by_model[m]
