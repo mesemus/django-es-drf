@@ -2,19 +2,15 @@ from collections import namedtuple
 from dataclasses import dataclass
 from typing import Type, Dict
 
-from elasticsearch_dsl import Document
+import lazy_object_proxy
 from django.db.models import Model
+from django.db.models.signals import post_save, post_delete
+from elasticsearch_dsl import Document
 from rest_framework.serializers import ModelSerializer
 
 from . import settings
 from .drf.serializers import StrictModelSerializer
-from .indexer import disabled_es
 from .json import to_plain_json
-
-from django.db.models.signals import post_save, post_delete
-
-import lazy_object_proxy
-from .indexer import es_index
 
 
 @dataclass
@@ -22,39 +18,6 @@ class DocumentRegistryEntry:
     model: Type[Model]
     document: Type[Document]
     serializer: Type[ModelSerializer]
-
-
-class DjangoDocument(Document):
-    DOCUMENT_ID_FIELD = "id"
-    DJANGO_ID_FIELD = "pk"
-
-    def save(self, **kwargs):
-        django_object = kwargs.pop("django_object", None)
-        with disabled_es():
-            # do not save to elasticsearch inside this block as we will call super below
-            obj = registry.save_to_django_object(self, django_object=django_object)
-        _id = getattr(obj, self.DJANGO_ID_FIELD)
-        setattr(self, self.DOCUMENT_ID_FIELD, _id)
-        self.meta._id = _id
-        self.meta.id = _id
-        self.full_clean()
-        es_index(self)
-
-    def delete(self, using=None, index=None, **kwargs):
-        entry = registry.get_registry_entry_from_document(type(self))
-        obj = entry.model.objects.get(**{self.DJANGO_ID_FIELD: self.meta.id})
-        with disabled_es():
-            obj.delete()
-        if "refresh" not in kwargs:
-            kwargs["refresh"] = True
-        return super().delete(using=using, index=index, **kwargs)
-
-    @classmethod
-    def from_django(cls, pk):
-        return registry.load_from_django_object(cls, pk)
-
-    def to_django(self):
-        return registry.save_to_django_object(self)
 
 
 RegistrationContext = namedtuple(
@@ -182,7 +145,7 @@ class DocumentRegistry:
     def save_to_django_object(self, document, django_object=None):
         self.__finish_registration()
         entry = self.get_registry_entry_from_document(type(document))
-        data = to_plain_json(document)
+        data = to_plain_json(document, skip_empty=False)
         data.pop(document.DOCUMENT_ID_FIELD, None)
         try:
             id = getattr(document, document.DOCUMENT_ID_FIELD)

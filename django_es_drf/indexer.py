@@ -61,11 +61,7 @@ def es_flush(force=False, refresh=False):
 
 
 def upsert(id, body, index):
-    d = {}
-    d["_op_type"] = "update"
-    d["_index"] = index
-    d["doc"] = body
-    d["doc_as_upsert"] = True
+    d = {**body, "_op_type": "index", "_index": index}
     if id:
         d["_id"] = id
     return d

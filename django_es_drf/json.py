@@ -5,14 +5,14 @@ from elasticsearch_dsl.response import AggResponse
 import datetime
 
 
-def to_plain_json(doc):
-    return json.loads(es_dump(doc.to_dict(skip_empty=False)))
+def to_plain_json(doc, skip_empty=True):
+    return json.loads(es_dump(doc.to_dict(skip_empty=skip_empty)))
 
 
 class ESEncoderClass(JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Document):
-            return obj.to_dict(skip_empty=False)
+            return obj.to_dict()
         if isinstance(obj, AttrList):
             return obj._l_
         if isinstance(obj, AttrDict):

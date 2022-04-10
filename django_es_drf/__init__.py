@@ -1,4 +1,5 @@
-from .document_registry import registry, DjangoDocument
+from .document_registry import registry
+from .document import DjangoDocument
 from .drf.viewsets import ESViewSet
 from .drf.aggs import AggBase, BucketAgg, TranslatedBucketAgg, NestedAgg, SeparatorAgg
 from .drf.serializers import ESDocumentSerializer

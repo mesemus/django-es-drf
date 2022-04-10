@@ -365,11 +365,11 @@ class DRFTestCase(TestCase):
             "/schools/1/", content_type="application/json", data={"name": "second"}
         )
         assert resp.status_code == 200
-        self.assertDictEqual(resp.json(), {"id": 1, "name": "second", "address": None})
+        self.assertDictEqual(resp.json(), {"id": 1, "name": "second"})
         resp = self.client.get("/schools/1/").json()
         self.assertDictEqual(
             resp,
-            {"id": 1, "name": "second", "address": None},
+            {"id": 1, "name": "second"},
         )
 
     def test_partial_update(self):
