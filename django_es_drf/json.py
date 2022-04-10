@@ -6,7 +6,7 @@ import datetime
 
 
 def to_plain_json(doc):
-    return json.loads(es_dump(doc.to_dict()))
+    return json.loads(es_dump(doc.to_dict(skip_empty=False)))
 
 
 class ESEncoderClass(JSONEncoder):

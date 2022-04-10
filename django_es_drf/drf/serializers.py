@@ -14,6 +14,7 @@ from rest_framework.utils.serializer_helpers import ReturnDict
 class StrictModelSerializer(ModelSerializer):
     def run_validation(self, data=empty):
         validated_data = super().run_validation(data)
+
         if data is not empty:
             data_keys = set(data.keys())
             validated_keys = set(validated_data.keys())
@@ -65,6 +66,10 @@ class ESDocumentSerializer(BaseSerializer):
             doctype = type(instance)
             if doctype.DOCUMENT_ID_FIELD not in validated_data:
                 validated_data[doctype.DOCUMENT_ID_FIELD] = instance.meta.id
+            if not self.partial:
+                for fld_name in instance._doc_type.mapping:
+                    if fld_name not in validated_data:
+                        validated_data[fld_name] = None
             instance = doctype(meta={"id": instance.meta.id}, **validated_data)
         instance.save()
         return instance
