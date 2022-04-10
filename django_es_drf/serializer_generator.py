@@ -38,8 +38,6 @@ def generate_extra_serializer_fields(
 
     extra_fields = generate_mapping(prefix, ctx, serializer, included, excluded, props)
 
-    if not extra_fields:
-        return serializer
     return type(f"{document.__name__}Serializer", (serializer,), extra_fields)
 
 

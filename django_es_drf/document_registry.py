@@ -14,6 +14,7 @@ from .json import to_plain_json
 from django.db.models.signals import post_save, post_delete
 
 import lazy_object_proxy
+from .indexer import es_index
 
 
 @dataclass
@@ -28,17 +29,16 @@ class DjangoDocument(Document):
     DJANGO_ID_FIELD = "pk"
 
     def save(self, **kwargs):
+        django_object = kwargs.pop("django_object", None)
         with disabled_es():
             # do not save to elasticsearch inside this block as we will call super below
-            obj = registry.save_to_django_object(self)
-            obj.save()
+            obj = registry.save_to_django_object(self, django_object=django_object)
         _id = getattr(obj, self.DJANGO_ID_FIELD)
         setattr(self, self.DOCUMENT_ID_FIELD, _id)
         self.meta._id = _id
         self.meta.id = _id
-        if "refresh" not in kwargs:
-            kwargs["refresh"] = True
-        return super().save(**kwargs)
+        self.full_clean()
+        es_index(self)
 
     def delete(self, using=None, index=None, **kwargs):
         entry = registry.get_registry_entry_from_document(type(self))
@@ -69,15 +69,15 @@ class DocumentRegistry:
         self.delayed_registrations = []
 
     def register(
-            self,
-            model: Type[Model],
-            serializer: Type[ModelSerializer] = None,
-            serializer_meta: Dict[str, any] = None,
-            generate=True,
-            included=(),
-            excluded=(),
-            mapping=None,
-            serializer_mapping=None,
+        self,
+        model: Type[Model],
+        serializer: Type[ModelSerializer] = None,
+        serializer_meta: Dict[str, any] = None,
+        generate=True,
+        included=(),
+        excluded=(),
+        mapping=None,
+        serializer_mapping=None,
     ):
         """
         A decorator that registers a model with a DSL document. Usage
@@ -223,7 +223,7 @@ class DocumentRegistry:
         return doc._index._name, doc.meta.id, to_plain_json(doc)
 
     def get_registry_entry_from_document(
-            self, document: Type[Document]
+        self, document: Type[Document]
     ) -> DocumentRegistryEntry:
         self.__finish_registration()
         for m in document.mro():
@@ -234,7 +234,7 @@ class DocumentRegistry:
         )
 
     def get_registry_entry_from_django(
-            self, django: Type[Model]
+        self, django: Type[Model]
     ) -> DocumentRegistryEntry:
         self.__finish_registration()
         for m in django.mro():

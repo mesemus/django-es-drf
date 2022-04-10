@@ -1,11 +1,14 @@
 import contextlib
 import contextlib
+import logging
 import threading
 
 from django.conf import settings
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl.connections import get_connection
-import logging
+from elasticsearch_dsl import Document
+
+from .json import to_plain_json
 
 log = logging.getLogger("django_es_drf")
 
@@ -75,11 +78,14 @@ def es_index_internal(objects, refresh=True):
         return
     actions = []
     for obj, should_delete in objects:
-        try:
-            idx, _id, data = registry.model_to_index_and_id_and_data(obj)
-        except:
-            log.exception("Error in indexing object %s:%s", type(obj), obj.pk)
-            continue
+        if isinstance(obj, Document):
+            idx, _id, data = obj._index._name, obj.meta.id, to_plain_json(obj)
+        else:
+            try:
+                idx, _id, data = registry.model_to_index_and_id_and_data(obj)
+            except:
+                log.exception("Error in indexing object %s:%s", type(obj), obj.pk)
+                continue
 
         if should_delete and _id:
             actions.append({"_op_type": "delete", "_index": idx, "_id": _id})
