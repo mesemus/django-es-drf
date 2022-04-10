@@ -66,9 +66,9 @@ def generate_field_mapping(prefixed_name, fld_name, fld, ctx):
         multi = False
     es_field_callable = get_serializer_field_from_es_field(prefixed_name, fld, ctx)
     if inspect.isclass(es_field_callable) and issubclass(es_field_callable, e.Field):
-        ret = es_field_callable()
+        ret = es_field_callable(allow_null=True)
     elif callable(es_field_callable):
-        ret = es_field_callable(fld_name, fld, ctx)
+        ret = es_field_callable(fld_name, fld, ctx, allow_null=True)
     else:
         raise ValueError(
             f"Bad value for field {prefixed_name}: expecting DSL field or callable, got {es_field_callable}"
