@@ -130,7 +130,7 @@ class TranslatedBucketAgg(BucketAgg):
 
     def process_result(self, data):
         ret = super().process_result(data)
-        if "buckets" in ret:
+        if ret and "buckets" in ret:
             ret["buckets"] = [
                 {
                     **x,
