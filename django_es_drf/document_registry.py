@@ -12,6 +12,8 @@ from . import settings
 from .drf.serializers import StrictModelSerializer
 from .json import to_plain_json
 
+from django.db.utils import ProgrammingError
+
 
 @dataclass
 class DocumentRegistryEntry:
@@ -110,6 +112,11 @@ class DocumentRegistry:
                 document = generate_extra_document_fields(
                     document, model, serializer, mapping, included, excluded
                 )
+            except ProgrammingError:
+                print(
+                    f"Error generating extra document fields for model {model} - probably database not migrated"
+                )
+                return
             except:
                 print(f"Error generating extra document fields for model {model}")
                 raise
