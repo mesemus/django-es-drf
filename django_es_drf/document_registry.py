@@ -164,7 +164,7 @@ class DocumentRegistry:
                     **{document.DJANGO_ID_FIELD: id}
                 ).first()
         serializer = entry.serializer(data=data)
-        serializer.is_valid(True)
+        serializer.is_valid(raise_exception=True)
 
         if not django_object:
             return serializer.create(serializer.validated_data)
